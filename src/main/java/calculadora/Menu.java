@@ -1,4 +1,4 @@
-package gui;
+package calculadora;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,8 +21,9 @@ public class Menu extends JFrame{
     private JLabel VTitulo;
     private JButton btnSaveM;
     private JPanel panelVector2;
-    private JButton btnOperacon;
-    private JTextArea textArea1;
+    private JButton btnOperacion;
+    private JTextArea textResultado;
+    private String op="";
 
     public Menu(){
         initComponents();
@@ -31,32 +32,44 @@ public class Menu extends JFrame{
         btnTLineales.addActionListener(e->{
             matrizSize.setEnabled(true);
             vectorSize.setEnabled(true);
-            btnGenerate.addActionListener(a->{
-                var matrizCampos=generarMatriz();
-                var vectorCampos= generarVector(panelVector);
-                btnOperacon.setVisible(true);
-                btnOperacon.addActionListener(o->{
-                    var resultado= linealTransform(saveMatriz(matrizCampos),saveVector(vectorCampos));
-                    for (int i = 0; i <resultado.getNumRows() ; i++) {
-                        System.out.print("["+resultado.get(i,0)+"]");
-                    }
-                });
-            });
+            op="tLineal";
         });
         btnPinterior.addActionListener(e->{
             vectorSize.setEnabled(true);
-            btnGenerate.addActionListener(a->{
-                generarVector(panelVector);
-                generarVector(panelVector2);
-                btnOperacon.setVisible(true);
-            });
+            op="pInterior";
         });
-        btnDQr.addActionListener(e->{
-            matrizSize.setEnabled(true);
-            btnGenerate.addActionListener(a->{
-                generarMatriz();
-                btnOperacon.setVisible(true);
-            });
+
+        btnGenerate.addActionListener(a -> {
+            btnOperacion.setVisible(true);
+
+            switch (op) {
+                case "tLineal":
+                    var matrizCampos = generarMatriz();
+                    var vectorCampos = generarVector(panelVector);
+                    btnOperacion.addActionListener(o -> {
+                        var resultado = linealTransform(saveMatriz(matrizCampos), saveVector(vectorCampos));
+                        for (int i = 0; i < resultado.getNumRows(); i++) {
+                            System.out.print("[" + resultado.get(i, 0) + "]");
+                            textResultado.append("x" + i + "=" + resultado.get(i, 0) + "\n");
+                        }
+                    });
+                    break;
+
+                case "pInterior":
+                    var vector1 = generarVector(panelVector);
+                    var vector2 = generarVector(panelVector2);
+                    btnOperacion.addActionListener(o -> {
+                        double resultado = ProductoInterior(saveVector(vector1), saveVector(vector2));
+                        System.out.println("Producto Interior: " + resultado);
+                        textResultado.append("Producto Interior: " + resultado + "\n");
+                    });
+                    break;
+
+                case "dQR":
+                    generarMatriz();
+                    // Aquí se agregaría el código para la descomposición QR
+                    break;
+            }
         });
     }
 
@@ -133,7 +146,7 @@ public class Menu extends JFrame{
         for (int i = 0; i < size; i++) {
             System.out.print("["+vector[i]+"]");
         }
-        System.out.println();
+
         return vector;
     }
 
@@ -144,10 +157,16 @@ public class Menu extends JFrame{
         SimpleMatrix Tmatriz= new SimpleMatrix(matrizObj);
         SimpleMatrix TVector= new SimpleMatrix(vectorObj);
 
-        SimpleMatrix transforVector= Tmatriz.mult(TVector);
-        return transforVector;
+        return Tmatriz.mult(TVector);
     }
+    private double ProductoInterior(double[] vector1,double[] vector2){
+        double[]vector1Obj=vector1;
+        double[]vector2Obj=vector2;
+        SimpleMatrix TVector1= new SimpleMatrix(vector1Obj);
+        SimpleMatrix TVector2= new SimpleMatrix(vector2Obj);
 
+        return TVector1.dot(TVector2);
+    }
 
 
     private void initComponents(){
