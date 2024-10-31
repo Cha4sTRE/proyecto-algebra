@@ -4,8 +4,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import org.ejml.simple.SimpleMatrix;
 
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.factory.DecompositionFactory_DDRM;
+import org.ejml.interfaces.decomposition.QRDecomposition;
+import org.ejml.simple.SimpleMatrix;
 public class Menu extends JFrame{
     private JPanel mainPanel;
     private JButton btnTLineales;
@@ -38,7 +41,10 @@ public class Menu extends JFrame{
             vectorSize.setEnabled(true);
             op="pInterior";
         });
-
+        btnDQr.addActionListener(e->{
+            matrizSize.setEnabled(true);
+            op="dQr";
+        });
         btnGenerate.addActionListener(a -> {
             btnOperacion.setVisible(true);
 
@@ -65,9 +71,29 @@ public class Menu extends JFrame{
                     });
                     break;
 
-                case "dQR":
-                    generarMatriz();
-                    // Aquí se agregaría el código para la descomposición QR
+                case "dQr":
+                    var matriz=generarMatriz();
+                    btnOperacion.addActionListener(o->{
+                        double[][]Q=null;
+                        double[][]R=null;
+                        var objQr= descomposicionQR(saveMatriz(matriz));
+                        Q= (double[][]) objQr[0];
+                        R= (double[][]) objQr[1];
+                        System.out.println("matriz q:");
+                        for (int i = 0; i <Q.length ; i++) {
+                            for (int j = 0; j < Q[i].length ; j++) {
+                                System.out.print("["+Q[i][j]+"]");
+                            }
+                            System.out.println();
+                        }
+                        System.out.println("matrix R:");
+                        for (int i = 0; i <R.length ; i++) {
+                            for (int j = 0; j < R[i].length ; j++) {
+                                System.out.print("["+R[i][j]+"]");
+                            }
+                            System.out.println();
+                        }
+                    });
                     break;
             }
         });
@@ -152,22 +178,45 @@ public class Menu extends JFrame{
 
     private SimpleMatrix linealTransform(double[][] matriz, double[] vector){
 
-        double[][] matrizObj=matriz;
-        double[] vectorObj=vector;
-        SimpleMatrix Tmatriz= new SimpleMatrix(matrizObj);
-        SimpleMatrix TVector= new SimpleMatrix(vectorObj);
+        SimpleMatrix Tmatriz= new SimpleMatrix(matriz);
+        SimpleMatrix TVector= new SimpleMatrix(vector);
 
         return Tmatriz.mult(TVector);
     }
     private double ProductoInterior(double[] vector1,double[] vector2){
-        double[]vector1Obj=vector1;
-        double[]vector2Obj=vector2;
-        SimpleMatrix TVector1= new SimpleMatrix(vector1Obj);
-        SimpleMatrix TVector2= new SimpleMatrix(vector2Obj);
+        SimpleMatrix TVector1= new SimpleMatrix(vector1);
+        SimpleMatrix TVector2= new SimpleMatrix(vector2);
 
         return TVector1.dot(TVector2);
     }
+    private Object[] descomposicionQR(double[][] matriz){
 
+        SimpleMatrix matrix= new SimpleMatrix(matriz);
+        QRDecomposition<DMatrixRMaj> qrDecomposition= DecompositionFactory_DDRM.qr(matrix.getNumRows(),matrix.getNumCols());
+
+        if (!qrDecomposition.decompose(matrix.getDDRM())) {
+            throw new RuntimeException("La descomposición QR falló.");
+        }
+
+        DMatrixRMaj Q = qrDecomposition.getQ(null, false);
+        DMatrixRMaj R = qrDecomposition.getR(null, false);
+
+        double[][] matrizQ=new double[Q.numRows][Q.numCols];
+        double[][] matrizR=new double[R.numRows][R.numCols];
+
+        for (int i = 0; i < Q.numRows; i++) {
+            for (int j = 0; j < Q.numCols; j++) {
+                matrizQ[i][j]=Q.get(i,j);
+            }
+        }
+        for (int i = 0; i < R.numRows; i++) {
+            for (int j = 0; j < R.numCols; j++) {
+                matrizR[i][j]=R.get(i,j);
+            }
+        }
+
+        return new Object[]{matrizQ,matrizR};
+    }
 
     private void initComponents(){
         setContentPane(mainPanel);
