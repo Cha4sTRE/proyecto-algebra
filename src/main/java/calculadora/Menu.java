@@ -9,6 +9,10 @@ import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.factory.DecompositionFactory_DDRM;
 import org.ejml.interfaces.decomposition.QRDecomposition;
 import org.ejml.simple.SimpleMatrix;
+import org.knowm.xchart.XChartPanel;
+import org.knowm.xchart.XYChart;
+import org.knowm.xchart.XYChartBuilder;
+
 public class Menu extends JFrame{
     private JPanel mainPanel;
     private JButton btnTLineales;
@@ -26,6 +30,7 @@ public class Menu extends JFrame{
     private JPanel panelVector2;
     private JButton btnOperacion;
     private JTextArea textResultado;
+    private JPanel panelGrafica;
     private String op="";
 
     public Menu(){
@@ -53,11 +58,19 @@ public class Menu extends JFrame{
                     var matrizCampos = generarMatriz();
                     var vectorCampos = generarVector(panelVector);
                     btnOperacion.addActionListener(o -> {
-                        var resultado = linealTransform(saveMatriz(matrizCampos), saveVector(vectorCampos));
-                        for (int i = 0; i < resultado.getNumRows(); i++) {
-                            System.out.print("[" + resultado.get(i, 0) + "]");
-                            textResultado.append("x" + i + "=" + resultado.get(i, 0) + "\n");
+                        var matrizOriginal=saveMatriz(matrizCampos);
+                        var vectorOriginal=saveVector(vectorCampos);
+                        var resultado = linealTransform(matrizOriginal,vectorOriginal);
+                        double[] transformacion=new double[resultado.getNumRows()];
+                        for (int i = 0; i < resultado.getNumRows(); i++) transformacion[i]= resultado.get(i,0);
+                        for (int i = 0; i < transformacion.length; i++) {
+                            System.out.print("x"+i+"=");
+                            System.out.print("[" + transformacion[i] + "]");
+                            textResultado.append("x" + i + "=" + transformacion[i] + "\n");
                         }
+                        XYChart chart=graficarTLineal(vectorOriginal,transformacion);
+                        XChartPanel<XYChart> panel=new XChartPanel<>(chart);
+                        panelGrafica.add(panel);
                     });
                     break;
 
@@ -68,6 +81,7 @@ public class Menu extends JFrame{
                         double resultado = ProductoInterior(saveVector(vector1), saveVector(vector2));
                         System.out.println("Producto Interior: " + resultado);
                         textResultado.append("Producto Interior: " + resultado + "\n");
+
                     });
                     break;
 
@@ -80,17 +94,23 @@ public class Menu extends JFrame{
                         Q= (double[][]) objQr[0];
                         R= (double[][]) objQr[1];
                         System.out.println("matriz q:");
+                        textResultado.append("Matriz Q: \n");
                         for (int i = 0; i <Q.length ; i++) {
                             for (int j = 0; j < Q[i].length ; j++) {
-                                System.out.print("["+Q[i][j]+"]");
+                                textResultado.append("("+ String.format("%.2f",Q[i][j]) + ")");
+                                System.out.print("["+String.format("%.2f",Q[i][j])+"]");
                             }
+                            textResultado.append("\n");
                             System.out.println();
                         }
                         System.out.println("matrix R:");
+                        textResultado.append("Matriz R: \n");
                         for (int i = 0; i <R.length ; i++) {
                             for (int j = 0; j < R[i].length ; j++) {
-                                System.out.print("["+R[i][j]+"]");
+                                textResultado.append("(" + String.format("%.2f",R[i][j]) + ")");
+                                System.out.print("["+String.format("%.2f",R[i][j])+"]");
                             }
+                            textResultado.append("\n");
                             System.out.println();
                         }
                     });
@@ -172,7 +192,7 @@ public class Menu extends JFrame{
         for (int i = 0; i < size; i++) {
             System.out.print("["+vector[i]+"]");
         }
-
+        System.out.println();
         return vector;
     }
 
@@ -216,6 +236,22 @@ public class Menu extends JFrame{
         }
 
         return new Object[]{matrizQ,matrizR};
+    }
+
+    private XYChart graficarTLineal(double[] vectorOriginal,double[] vectorTransformado){
+
+        XYChart chart= new XYChartBuilder().width(panelGrafica.getWidth()).height(panelGrafica.getHeight()).
+                title("Grafica T. Lineal").xAxisTitle("X").yAxisTitle("Y").build();
+
+        // Vector original
+        chart.addSeries("Vector Original", new double[] {0, vectorOriginal[0]},
+                new double[] {0, vectorOriginal[vectorOriginal.length-1]});
+
+        // Vector transformado
+        chart.addSeries("Vector Transformado", new double[] {0, vectorTransformado[0]},
+                new double[] {0, vectorTransformado[vectorTransformado.length-1]});
+
+        return chart;
     }
 
     private void initComponents(){
