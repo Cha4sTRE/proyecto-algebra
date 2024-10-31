@@ -232,7 +232,8 @@
                 </constraints>
                 <properties>
                   <background color="-1"/>
-                  <enabled value="false"/>
+                  <editable value="false"/>
+                  <enabled value="true"/>
                   <font name="Maiandra GD" size="20" style="0"/>
                   <foreground color="-16777216"/>
                   <margin top="5" left="5" bottom="5" right="5"/>

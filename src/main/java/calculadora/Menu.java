@@ -145,22 +145,27 @@ public class Menu extends JFrame{
                         System.out.println("matriz q:");
                         textResultado.append("Matriz Q: \n");
                         for (int i = 0; i <Q.length ; i++) {
+                            textResultado.append("(");
                             for (int j = 0; j < Q[i].length ; j++) {
-                                textResultado.append("("+ String.format("%.2f",Q[i][j]) + ")");
+                                textResultado.append(String.format("%.2f",Q[i][j]));
+                                if (j < Q[i].length - 1) textResultado.append(" , ");
                                 System.out.print("["+String.format("%.2f",Q[i][j])+"]");
-                            }
-                            textResultado.append("\n");
-                            System.out.println();
-                        }
-                        System.out.println("matrix R:");
-                        textResultado.append("Matriz R: \n");
-                        for (int i = 0; i <R.length ; i++) {
-                            for (int j = 0; j < R[i].length ; j++) {
-                                textResultado.append("(" + String.format("%.2f",R[i][j]) + ")");
-                                System.out.print("["+String.format("%.2f",R[i][j])+"]");
 
                             }
-                            textResultado.append("\n");
+                            textResultado.append(")\n");
+                            System.out.println();
+
+                        }
+                        System.out.println("R:");
+                        textResultado.append("Matriz R: \n");
+                        for (int i = 0; i <R.length ; i++) {
+                            textResultado.append("(");
+                            for (int j = 0; j < R[i].length ; j++) {
+                                textResultado.append(String.format("%.2f",R[i][j]));
+                                if (j < Q[i].length - 1) textResultado.append(" , ");
+                                System.out.print("["+String.format("%.2f",R[i][j])+"]");
+                            }
+                            textResultado.append(")\n");
                             System.out.println();
                         }
                         XYChart chart=graficarDQr(Q,R);
