@@ -38,15 +38,63 @@ public class Menu extends JFrame{
         matrizSize.setEnabled(false);
         vectorSize.setEnabled(false);
         btnTLineales.addActionListener(e->{
+            panelMatriz.removeAll();
+            panelMatriz.repaint();
+            panelVector.removeAll();
+            panelVector.repaint();
+            panelVector2.removeAll();
+            panelVector2.repaint();
+            panelGrafica.removeAll();
+            panelGrafica.repaint();
             matrizSize.setEnabled(true);
             vectorSize.setEnabled(true);
+            btnOperacion.setVisible(false);
+            matrizSize.setText("");
+            vectorSize.setText("");
+            textResultado.setText("");
+            MTitulo.setVisible(false);
+            VTitulo.setVisible(false);
             op="tLineal";
         });
         btnPinterior.addActionListener(e->{
+            matrizSize.setEnabled(false);
+            panelMatriz.removeAll();
+            panelMatriz.repaint();
+            panelVector.removeAll();
+            panelVector.repaint();
+            panelVector2.removeAll();
+            panelVector2.repaint();
+            panelGrafica.removeAll();
+            panelGrafica.repaint();
+            matrizSize.setEnabled(true);
+            vectorSize.setEnabled(true);
+            btnOperacion.setVisible(false);
+            matrizSize.setText("");
+            vectorSize.setText("");
+            textResultado.setText("");
+            MTitulo.setVisible(false);
+            VTitulo.setVisible(false);
             vectorSize.setEnabled(true);
             op="pInterior";
         });
         btnDQr.addActionListener(e->{
+            vectorSize.setEnabled(false);
+            panelMatriz.removeAll();
+            panelMatriz.repaint();
+            panelVector.removeAll();
+            panelVector.repaint();
+            panelVector2.removeAll();
+            panelVector2.repaint();
+            panelGrafica.removeAll();
+            panelGrafica.repaint();
+            matrizSize.setEnabled(true);
+            vectorSize.setEnabled(true);
+            btnOperacion.setVisible(false);
+            matrizSize.setText("");
+            vectorSize.setText("");
+            textResultado.setText("");
+            MTitulo.setVisible(false);
+            VTitulo.setVisible(false);
             matrizSize.setEnabled(true);
             op="dQr";
         });
@@ -90,6 +138,7 @@ public class Menu extends JFrame{
                     btnOperacion.addActionListener(o->{
                         double[][]Q=null;
                         double[][]R=null;
+                        double[][]QR=null;
                         var objQr= descomposicionQR(saveMatriz(matriz));
                         Q= (double[][]) objQr[0];
                         R= (double[][]) objQr[1];
@@ -109,10 +158,14 @@ public class Menu extends JFrame{
                             for (int j = 0; j < R[i].length ; j++) {
                                 textResultado.append("(" + String.format("%.2f",R[i][j]) + ")");
                                 System.out.print("["+String.format("%.2f",R[i][j])+"]");
+
                             }
                             textResultado.append("\n");
                             System.out.println();
                         }
+                        XYChart chart=graficarDQr(Q,R);
+                        XChartPanel<XYChart> panel=new XChartPanel<>(chart);
+                        panelGrafica.add(panel);
                     });
                     break;
             }
@@ -253,7 +306,45 @@ public class Menu extends JFrame{
 
         return chart;
     }
+    private XYChart graficarDQr(double[][] Q,double[][] R){
+        XYChart chart = new XYChartBuilder()
+                .width(panelGrafica.getWidth())
+                .height(panelGrafica.getHeight())
+                .title("Grafica DQr")
+                .xAxisTitle("X")
+                .yAxisTitle("Y")
+                .build();
 
+        SimpleMatrix matrizQ = new SimpleMatrix(Q);
+        SimpleMatrix matrizR = new SimpleMatrix(R);
+
+        // Base estándar en la misma dimensión que las matrices Q y R
+        SimpleMatrix baseEstandar = SimpleMatrix.identity(Q.length);
+
+        // Aplicar Q a la base estándar
+        SimpleMatrix baseTransformadaQ = matrizQ.mult(baseEstandar);
+
+        // Graficar cada vector transformado por Q
+        for (int i = 0; i < baseTransformadaQ.numCols(); i++) {
+            double x = baseTransformadaQ.get(0, i); // Componente X del vector transformado
+            double y = baseTransformadaQ.get(1, i); // Componente Y del vector transformado
+
+            chart.addSeries("Vector Q" + (i + 1), new double[] {0, x}, new double[] {0, y});
+        }
+
+        // Aplicar R a la base estándar (o a baseTransformadaQ si quieres la transformación completa)
+        SimpleMatrix baseTransformadaR = matrizR.mult(baseEstandar);
+
+        // Graficar cada vector transformado por R
+        for (int i = 0; i < baseTransformadaR.numCols(); i++) {
+            double x = baseTransformadaR.get(0, i); // Componente X del vector transformado
+            double y = baseTransformadaR.get(1, i); // Componente Y del vector transformado
+
+            chart.addSeries("Vector R" + (i + 1), new double[] {0, x}, new double[] {0, y});
+        }
+
+        return chart;
+    }
     private void initComponents(){
         setContentPane(mainPanel);
         setTitle("Calculadora de Matrices");
