@@ -38,40 +38,14 @@ public class Menu extends JFrame{
         matrizSize.setEnabled(false);
         vectorSize.setEnabled(false);
         btnTLineales.addActionListener(e->{
-            panelMatriz.removeAll();
-            panelMatriz.repaint();
-            panelVector.removeAll();
-            panelVector.repaint();
-            panelVector2.removeAll();
-            panelVector2.repaint();
-            panelGrafica.removeAll();
-            panelGrafica.repaint();
-            matrizSize.setEnabled(true);
-            vectorSize.setEnabled(true);
-            btnOperacion.setVisible(false);
-            matrizSize.setText("");
-            vectorSize.setText("");
-            textResultado.setText("");
+           limparCampos();
             MTitulo.setVisible(false);
             VTitulo.setVisible(false);
             op="tLineal";
         });
         btnPinterior.addActionListener(e->{
             matrizSize.setEnabled(false);
-            panelMatriz.removeAll();
-            panelMatriz.repaint();
-            panelVector.removeAll();
-            panelVector.repaint();
-            panelVector2.removeAll();
-            panelVector2.repaint();
-            panelGrafica.removeAll();
-            panelGrafica.repaint();
-            matrizSize.setEnabled(true);
-            vectorSize.setEnabled(true);
-            btnOperacion.setVisible(false);
-            matrizSize.setText("");
-            vectorSize.setText("");
-            textResultado.setText("");
+            limparCampos();
             MTitulo.setVisible(false);
             VTitulo.setVisible(false);
             vectorSize.setEnabled(true);
@@ -79,20 +53,7 @@ public class Menu extends JFrame{
         });
         btnDQr.addActionListener(e->{
             vectorSize.setEnabled(false);
-            panelMatriz.removeAll();
-            panelMatriz.repaint();
-            panelVector.removeAll();
-            panelVector.repaint();
-            panelVector2.removeAll();
-            panelVector2.repaint();
-            panelGrafica.removeAll();
-            panelGrafica.repaint();
-            matrizSize.setEnabled(true);
-            vectorSize.setEnabled(true);
-            btnOperacion.setVisible(false);
-            matrizSize.setText("");
-            vectorSize.setText("");
-            textResultado.setText("");
+           limparCampos();
             MTitulo.setVisible(false);
             VTitulo.setVisible(false);
             matrizSize.setEnabled(true);
@@ -129,7 +90,9 @@ public class Menu extends JFrame{
                         double resultado = ProductoInterior(saveVector(vector1), saveVector(vector2));
                         System.out.println("Producto Interior: " + resultado);
                         textResultado.append("Producto Interior: " + resultado + "\n");
-
+                        XYChart chart=graficarPInterno(saveVector(vector1),saveVector(vector2),resultado);
+                        XChartPanel<XYChart> panel=new XChartPanel<>(chart);
+                        panelGrafica.add(panel);
                     });
                     break;
 
@@ -177,6 +140,22 @@ public class Menu extends JFrame{
         });
     }
 
+    private void limparCampos(){
+        panelMatriz.removeAll();
+        panelMatriz.repaint();
+        panelVector.removeAll();
+        panelVector.repaint();
+        panelVector2.removeAll();
+        panelVector2.repaint();
+        panelGrafica.removeAll();
+        panelGrafica.repaint();
+        matrizSize.setEnabled(true);
+        vectorSize.setEnabled(true);
+        btnOperacion.setVisible(false);
+        matrizSize.setText("");
+        vectorSize.setText("");
+        textResultado.setText("");
+    }
     private List<JTextField> generarMatriz(){
 
         int size=Integer.parseInt(matrizSize.getText());
@@ -309,6 +288,17 @@ public class Menu extends JFrame{
         chart.addSeries("Vector Transformado", new double[] {0, vectorTransformado[0]},
                 new double[] {0, vectorTransformado[vectorTransformado.length-1]});
 
+        return chart;
+    }
+    private XYChart graficarPInterno(double[] vector1,double[]vector2, double Pinterno){
+
+        XYChart chart=new XYChartBuilder().width(panelGrafica.getWidth()).height(panelGrafica.getHeight()).
+                title("Grafica P. Internol").xAxisTitle("X").yAxisTitle("Y").build();
+
+
+        chart.addSeries("vector A",new double[]{0,vector1[vector1.length-1]},new double[]{0,vector1[vector1.length-1]});
+        chart.addSeries("vector B",new double[]{0,vector2[vector2.length-1]},new double[]{0,vector2[vector2.length-1]});
+        chart.setTitle("Producto interno: "+Pinterno);
         return chart;
     }
     private XYChart graficarDQr(double[][] Q,double[][] R){
