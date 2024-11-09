@@ -2,10 +2,13 @@ package calculadora;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.formdev.flatlaf.themes.FlatMacLightLaf;
 import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.decomposition.qr.QRDecompositionHouseholder_DDRM;
 import org.ejml.dense.row.factory.DecompositionFactory_DDRM;
 import org.ejml.interfaces.decomposition.QRDecomposition;
 import org.ejml.simple.SimpleMatrix;
@@ -18,8 +21,8 @@ public class Menu extends JFrame{
     private JButton btnTLineales;
     private JButton btnPinterior;
     private JButton btnDQr;
-    private JTextField vectorSize;
-    private JTextField matrizSize;
+    private JSpinner vectorSize;
+    private JSpinner matrizSize;
     private JButton btnGenerate;
     private JPanel panelMatriz;
     private JPanel panelVector;
@@ -34,6 +37,7 @@ public class Menu extends JFrame{
     private String op="";
 
     public Menu(){
+
         initComponents();
         matrizSize.setEnabled(false);
         vectorSize.setEnabled(false);
@@ -42,132 +46,181 @@ public class Menu extends JFrame{
             MTitulo.setVisible(false);
             VTitulo.setVisible(false);
             op="tLineal";
+
         });
         btnPinterior.addActionListener(e->{
-            matrizSize.setEnabled(false);
             limparCampos();
+            matrizSize.setEnabled(false);
             MTitulo.setVisible(false);
             VTitulo.setVisible(false);
             vectorSize.setEnabled(true);
             op="pInterior";
         });
         btnDQr.addActionListener(e->{
-            vectorSize.setEnabled(false);
            limparCampos();
+            vectorSize.setEnabled(false);
             MTitulo.setVisible(false);
             VTitulo.setVisible(false);
             matrizSize.setEnabled(true);
             op="dQr";
         });
         btnGenerate.addActionListener(a -> {
-            btnOperacion.setVisible(true);
+
+            // Remover listeners previos de btnOperacion
+            for (ActionListener listener : btnOperacion.getActionListeners()) {
+                btnOperacion.removeActionListener(listener);
+            }
 
             switch (op) {
                 case "tLineal":
-                    var matrizCampos = generarMatriz();
-                    var vectorCampos = generarVector(panelVector);
-                    btnOperacion.addActionListener(o -> {
-                        var matrizOriginal=saveMatriz(matrizCampos);
-                        var vectorOriginal=saveVector(vectorCampos);
-                        var resultado = linealTransform(matrizOriginal,vectorOriginal);
-                        double[] transformacion=new double[resultado.getNumRows()];
-                        for (int i = 0; i < resultado.getNumRows(); i++) transformacion[i]= resultado.get(i,0);
-                        for (int i = 0; i < transformacion.length; i++) {
-                            System.out.print("x"+i+"=");
-                            System.out.print("[" + transformacion[i] + "]");
-                            textResultado.append("x" + i + "=" + transformacion[i] + "\n");
+                    if(vectorSize.getValue().equals(matrizSize.getValue())){
+                        btnOperacion.setVisible(true);
+                        try{
+                            var matrizCampos = generarMatriz();
+                            var vectorCampos = generarVector(panelVector);
+                            btnOperacion.addActionListener(ot -> {
+                                panelGrafica.removeAll();
+                                panelGrafica.repaint();
+                                textResultado.setText("");
+
+                                var resultadoT = linealTransform(saveMatriz(matrizCampos),saveVector(vectorCampos));
+                                double[] transformacion=new double[resultadoT.getNumRows()];
+                                for (int i = 0; i < resultadoT.getNumRows(); i++) transformacion[i]= resultadoT.get(i,0);
+                                textResultado.append("x=(");
+                                for (int i = 0; i < transformacion.length; i++) {
+                                    System.out.print("[" + transformacion[i] + "]");
+                                    textResultado.append(String.valueOf(transformacion[i]));
+                                    if (i < transformacion.length-1) textResultado.append(" , ");
+                                }
+                                textResultado.append(")");
+
+                                XYChart chartT=graficarTLineal(saveVector(vectorCampos),transformacion);
+                                XChartPanel<XYChart> panelT=new XChartPanel<>(chartT);
+                                panelGrafica.add(panelT);
+                            });
+                        }catch (Exception e){
+                            JOptionPane.showOptionDialog(this,"Error, solo se admiten numeros",
+                                    null,JOptionPane.DEFAULT_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
                         }
-                        XYChart chart=graficarTLineal(vectorOriginal,transformacion);
-                        XChartPanel<XYChart> panel=new XChartPanel<>(chart);
-                        panelGrafica.add(panel);
-                    });
+                    }else{
+                        JOptionPane.showOptionDialog(this,"El vector y la matriz deben ser de igual tamaño",
+                                null,JOptionPane.DEFAULT_OPTION,JOptionPane.WARNING_MESSAGE,null,null,null);
+                    }
                     break;
 
                 case "pInterior":
-                    var vector1 = generarVector(panelVector);
-                    var vector2 = generarVector(panelVector2);
-                    btnOperacion.addActionListener(o -> {
-                        double resultado = ProductoInterior(saveVector(vector1), saveVector(vector2));
-                        System.out.println("Producto Interior: " + resultado);
-                        textResultado.append("Producto Interior: " + resultado + "\n");
-                        XYChart chart=graficarPInterno(saveVector(vector1),saveVector(vector2),resultado);
-                        XChartPanel<XYChart> panel=new XChartPanel<>(chart);
-                        panelGrafica.add(panel);
-                    });
+                    try{
+                        var vector1 = generarVector(panelVector);
+                        var vector2 = generarVector(panelVector2);
+                        btnOperacion.setVisible(true);
+                        btnOperacion.addActionListener(op -> {
+                            panelGrafica.removeAll();
+                            panelGrafica.repaint();
+                            textResultado.setText("");
+                            double resultadoP = ProductoInterior(saveVector(vector1),saveVector(vector2));
+                            System.out.println("Producto Interior: " + resultadoP);
+                            textResultado.append("Producto Interior: " + resultadoP + "\n");
+                            XYChart chartP=graficarPInterno(saveVector(vector1),saveVector(vector2),resultadoP);
+                            XChartPanel<XYChart> panelP=new XChartPanel<>(chartP);
+                            panelGrafica.add(panelP);
+                        });
+                    }catch (Exception e){
+                        JOptionPane.showOptionDialog(this,"Error, solo se admiten numeros",
+                                null,JOptionPane.DEFAULT_OPTION,JOptionPane.WARNING_MESSAGE,null,null,null);
+                    }
                     break;
 
                 case "dQr":
-                    var matriz=generarMatriz();
-                    btnOperacion.addActionListener(o->{
-                        double[][]Q=null;
-                        double[][]R=null;
-                        double[][]QR=null;
-                        var objQr= descomposicionQR(saveMatriz(matriz));
-                        Q= (double[][]) objQr[0];
-                        R= (double[][]) objQr[1];
-                        System.out.println("matriz q:");
-                        textResultado.append("Matriz Q: \n");
-                        for (int i = 0; i <Q.length ; i++) {
-                            textResultado.append("(");
-                            for (int j = 0; j < Q[i].length ; j++) {
-                                textResultado.append(String.format("%.2f",Q[i][j]));
-                                if (j < Q[i].length - 1) textResultado.append(" , ");
-                                System.out.print("["+String.format("%.2f",Q[i][j])+"]");
+                    btnOperacion.setVisible(true);
+                    try{
+                        var matrizCampos=generarMatriz();
+                        btnOperacion.addActionListener(od->{
+                            panelGrafica.removeAll();
+                            panelGrafica.repaint();
+                            textResultado.setText("");
+                            var matriz=saveMatriz(matrizCampos);
 
-                            }
-                            textResultado.append(")\n");
-                            System.out.println();
+                            double[][]Q=null;
+                            double[][]R=null;
+                            try{
+                                var objQr= descomposicionQR(matriz);
+                                Q= (double[][]) objQr[0];
+                                R= (double[][]) objQr[1];
+                                System.out.println("matriz q:");
+                                textResultado.append("Matriz Q: \n");
+                                for (int i = 0; i <Q.length ; i++) {
+                                    textResultado.append("(");
+                                    for (int j = 0; j < Q[i].length ; j++) {
+                                        textResultado.append(String.format("%.2f",Q[i][j]));
+                                        if (j < Q[i].length - 1) textResultado.append(" , ");
+                                        System.out.print("["+String.format("%.2f",Q[i][j])+"]");
 
-                        }
-                        System.out.println("R:");
-                        textResultado.append("Matriz R: \n");
-                        for (int i = 0; i <R.length ; i++) {
-                            textResultado.append("(");
-                            for (int j = 0; j < R[i].length ; j++) {
-                                textResultado.append(String.format("%.2f",R[i][j]));
-                                if (j < Q[i].length - 1) textResultado.append(" , ");
-                                System.out.print("["+String.format("%.2f",R[i][j])+"]");
+                                    }
+                                    textResultado.append(")\n");
+                                    System.out.println();
+
+                                }
+                                System.out.println("R:");
+                                textResultado.append("Matriz R: \n");
+                                for (int i = 0; i <R.length ; i++) {
+                                    textResultado.append("(");
+                                    for (int j = 0; j < R[i].length ; j++) {
+                                        textResultado.append(String.format("%.2f",R[i][j]));
+                                        if (j < Q[i].length - 1) textResultado.append(" , ");
+                                        System.out.print("["+String.format("%.2f",R[i][j])+"]");
+                                    }
+                                    textResultado.append(")\n");
+                                    System.out.println();
+                                }
+
+                                XYChart chartDqr=graficarDQr(Q,R);
+                                XChartPanel<XYChart> panelDqr=new XChartPanel<>(chartDqr);
+                                panelGrafica.add(panelDqr);
+                            }catch (RuntimeException e){
+                                JOptionPane.showOptionDialog(this,e.getMessage(),
+                                        null,JOptionPane.DEFAULT_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
                             }
-                            textResultado.append(")\n");
-                            System.out.println();
-                        }
-                        XYChart chart=graficarDQr(Q,R);
-                        XChartPanel<XYChart> panel=new XChartPanel<>(chart);
-                        panelGrafica.add(panel);
-                    });
+                        });
+                    }catch (Exception e){
+                        JOptionPane.showOptionDialog(this,"Error, solo se admiten numeros",
+                                null,JOptionPane.DEFAULT_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+                    }
                     break;
             }
         });
     }
 
     private void limparCampos(){
+        textResultado.setText("");
+        panelGrafica.removeAll();
+        panelGrafica.repaint();
         panelMatriz.removeAll();
         panelMatriz.repaint();
         panelVector.removeAll();
         panelVector.repaint();
         panelVector2.removeAll();
         panelVector2.repaint();
-        panelGrafica.removeAll();
-        panelGrafica.repaint();
         matrizSize.setEnabled(true);
         vectorSize.setEnabled(true);
         btnOperacion.setVisible(false);
-        matrizSize.setText("");
-        vectorSize.setText("");
-        textResultado.setText("");
+        matrizSize.setValue(0);
+        vectorSize.setValue(0);
     }
-    private List<JTextField> generarMatriz(){
+    private List<JSpinner> generarMatriz(){
 
-        int size=Integer.parseInt(matrizSize.getText());
-        List<JTextField> campos=new ArrayList<>();
-        double[][][] saveMatriz=null;
-        panelMatriz.removeAll();
+        List<JSpinner> campos=new ArrayList<>();
+        campos.clear();
+
+    int size=(int) matrizSize.getValue();
+    double[][][] saveMatriz=null;
+    panelMatriz.removeAll();
+
         panelMatriz.setLayout(new GridLayout(size,size));
         MTitulo.setVisible(true);
         int index=0;
         for (int i = 0; i <size ; i++) {
             for (int j = 0; j < size; j++) {
-                JTextField campo=new JTextField(5);
+                JSpinner campo=new JSpinner(new SpinnerNumberModel(0,0,100,1));
                 campos.add(campo);
                 panelMatriz.add(campo);
 
@@ -176,19 +229,22 @@ public class Menu extends JFrame{
         panelMatriz.revalidate();
         panelMatriz.repaint();
 
+
+
         return campos;
     }
-    private List<JTextField> generarVector(JPanel panel){
-        int size=Integer.parseInt(vectorSize.getText());
-        List<JTextField> campos=new ArrayList<>();
-        double[] saveVector=null;
-        panel.removeAll();
+    private List<JSpinner> generarVector(JPanel panel){
+
+    List<JSpinner> campos=new ArrayList<>();
+    int size=(int)vectorSize.getValue();
+    double[] saveVector=null;
+    panel.removeAll();
         panel.setLayout(new GridLayout(1,size));
         VTitulo.setVisible(true);
         int index=0;
         for (int i = 0; i <size ; i++) {
 
-            JTextField campo=new JTextField(5);
+            JSpinner campo=new JSpinner(new SpinnerNumberModel(0,0,100,1));
             campos.add(campo);
             panel.add(campo);
 
@@ -199,14 +255,14 @@ public class Menu extends JFrame{
         return campos;
     }
 
-    private double[][] saveMatriz(List<JTextField> campos){
+    private double[][] saveMatriz(List<JSpinner> campos){
 
-        int size=Integer.parseInt(matrizSize.getText());
+        int size=(int)matrizSize.getValue();
         double [][] matriz= new double[size][size];
         int index=0;
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
-                matriz[i][j]=Double.parseDouble(campos.get(index).getText());
+                matriz[i][j]=(double)(int)campos.get(i).getValue();
                 index++;
             }
         }
@@ -219,11 +275,11 @@ public class Menu extends JFrame{
         }
         return matriz;
     }
-    private double[] saveVector(List<JTextField> campos){
-        int size=Integer.parseInt(vectorSize.getText());
+    private double[] saveVector(List<JSpinner> campos){
+        int size=(int) vectorSize.getValue();
         double[] vector=new double[size];
         for (int i = 0; i < size; i++) {
-            vector[i]=Double.parseDouble(campos.get(i).getText());
+            vector[i]=(double)(int) campos.get(i).getValue();
         }
         System.out.print("x= ");
         for (int i = 0; i < size; i++) {
@@ -249,18 +305,14 @@ public class Menu extends JFrame{
     private Object[] descomposicionQR(double[][] matriz){
 
         SimpleMatrix matrix= new SimpleMatrix(matriz);
-        QRDecomposition<DMatrixRMaj> qrDecomposition= DecompositionFactory_DDRM.qr(matrix.getNumRows(),matrix.getNumCols());
-
+        QRDecomposition<DMatrixRMaj> qrDecomposition= new QRDecompositionHouseholder_DDRM();
         if (!qrDecomposition.decompose(matrix.getDDRM())) {
             throw new RuntimeException("La descomposición QR falló.");
         }
-
         DMatrixRMaj Q = qrDecomposition.getQ(null, false);
         DMatrixRMaj R = qrDecomposition.getR(null, false);
-
         double[][] matrizQ=new double[Q.numRows][Q.numCols];
         double[][] matrizR=new double[R.numRows][R.numCols];
-
         for (int i = 0; i < Q.numRows; i++) {
             for (int j = 0; j < Q.numCols; j++) {
                 matrizQ[i][j]=Q.get(i,j);
@@ -340,13 +392,16 @@ public class Menu extends JFrame{
 
         return chart;
     }
+
     private void initComponents(){
         setContentPane(mainPanel);
         setTitle("Calculadora de Matrices");
-        setSize(800,600);
+        setSize(850,650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setVisible(true);
     }
-    public static void main(String[] args) {Menu menu=new Menu();}
+    public static void main(String[] args) {
+        FlatMacLightLaf.setup();
+        Menu menu=new Menu();}
 }
