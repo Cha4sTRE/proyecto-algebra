@@ -9,7 +9,6 @@ import java.util.List;
 import com.formdev.flatlaf.themes.FlatMacLightLaf;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.decomposition.qr.QRDecompositionHouseholder_DDRM;
-import org.ejml.dense.row.factory.DecompositionFactory_DDRM;
 import org.ejml.interfaces.decomposition.QRDecomposition;
 import org.ejml.simple.SimpleMatrix;
 import org.knowm.xchart.XChartPanel;
@@ -34,22 +33,23 @@ public class Menu extends JFrame{
     private JButton btnOperacion;
     private JTextArea textResultado;
     private JPanel panelGrafica;
+    private JScrollPane scrollMatriz;
+    private JScrollPane scrolllVector;
+    private JScrollPane scrollVector2;
     private String op="";
 
     public Menu(){
 
         initComponents();
-        matrizSize.setEnabled(false);
-        vectorSize.setEnabled(false);
         btnTLineales.addActionListener(e->{
-           limparCampos();
+           limpiarCampos();
             MTitulo.setVisible(false);
             VTitulo.setVisible(false);
             op="tLineal";
 
         });
         btnPinterior.addActionListener(e->{
-            limparCampos();
+            limpiarCampos();
             matrizSize.setEnabled(false);
             MTitulo.setVisible(false);
             VTitulo.setVisible(false);
@@ -57,7 +57,7 @@ public class Menu extends JFrame{
             op="pInterior";
         });
         btnDQr.addActionListener(e->{
-           limparCampos();
+           limpiarCampos();
             vectorSize.setEnabled(false);
             MTitulo.setVisible(false);
             VTitulo.setVisible(false);
@@ -76,7 +76,9 @@ public class Menu extends JFrame{
                     if(vectorSize.getValue().equals(matrizSize.getValue())){
                         btnOperacion.setVisible(true);
                         try{
+                            scrollMatriz.setVisible(true);
                             var matrizCampos = generarMatriz();
+                            scrolllVector.setVisible(true);
                             var vectorCampos = generarVector(panelVector);
                             btnOperacion.addActionListener(ot -> {
                                 panelGrafica.removeAll();
@@ -100,7 +102,7 @@ public class Menu extends JFrame{
                             });
                         }catch (Exception e){
                             JOptionPane.showOptionDialog(this,"Error, solo se admiten numeros",
-                                    null,JOptionPane.DEFAULT_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+                                    "Error",JOptionPane.DEFAULT_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
                         }
                     }else{
                         JOptionPane.showOptionDialog(this,"El vector y la matriz deben ser de igual tamaño",
@@ -110,7 +112,9 @@ public class Menu extends JFrame{
 
                 case "pInterior":
                     try{
+                        scrolllVector.setVisible(true);
                         var vector1 = generarVector(panelVector);
+                        scrollVector2.setVisible(true);
                         var vector2 = generarVector(panelVector2);
                         btnOperacion.setVisible(true);
                         btnOperacion.addActionListener(op -> {
@@ -133,6 +137,7 @@ public class Menu extends JFrame{
                 case "dQr":
                     btnOperacion.setVisible(true);
                     try{
+                        scrollMatriz.setVisible(true);
                         var matrizCampos=generarMatriz();
                         btnOperacion.addActionListener(od->{
                             panelGrafica.removeAll();
@@ -178,28 +183,31 @@ public class Menu extends JFrame{
                                 panelGrafica.add(panelDqr);
                             }catch (RuntimeException e){
                                 JOptionPane.showOptionDialog(this,e.getMessage(),
-                                        null,JOptionPane.DEFAULT_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+                                        "Error",JOptionPane.DEFAULT_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
                             }
                         });
                     }catch (Exception e){
                         JOptionPane.showOptionDialog(this,"Error, solo se admiten numeros",
-                                null,JOptionPane.DEFAULT_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
+                                "Error",JOptionPane.DEFAULT_OPTION,JOptionPane.ERROR_MESSAGE,null,null,null);
                     }
                     break;
             }
         });
     }
 
-    private void limparCampos(){
+    private void limpiarCampos(){
         textResultado.setText("");
         panelGrafica.removeAll();
         panelGrafica.repaint();
         panelMatriz.removeAll();
         panelMatriz.repaint();
+        scrollMatriz.setVisible(false);
         panelVector.removeAll();
         panelVector.repaint();
+        scrolllVector.setVisible(false);
         panelVector2.removeAll();
         panelVector2.repaint();
+        scrollVector2.setVisible(false);
         matrizSize.setEnabled(true);
         vectorSize.setEnabled(true);
         btnOperacion.setVisible(false);
@@ -209,11 +217,10 @@ public class Menu extends JFrame{
     private List<JSpinner> generarMatriz(){
 
         List<JSpinner> campos=new ArrayList<>();
-        campos.clear();
 
-    int size=(int) matrizSize.getValue();
-    double[][][] saveMatriz=null;
-    panelMatriz.removeAll();
+        int size=(int) matrizSize.getValue();
+        double[][][] saveMatriz=null;
+        panelMatriz.removeAll();
 
         panelMatriz.setLayout(new GridLayout(size,size));
         MTitulo.setVisible(true);
